@@ -1,7 +1,7 @@
 // Next.js API route support: https://nextjs.org/docs/api-routes/introduction
 import { MosaicTile, prisma, PrismaClient } from "@prisma/client";
 import type { NextApiRequest, NextApiResponse } from "next";
-const bodyParser = require('body-parser')
+
 
 export default async function handler(
   req: NextApiRequest,
@@ -16,7 +16,7 @@ export default async function handler(
         x_y: { x: tile.x,  y: tile.y }
       },
       data: {
-        color: "0070f3",
+        color: tile.color.substring(1),
       }
     })
    return res.send(mosaicTile);

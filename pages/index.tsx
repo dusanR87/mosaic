@@ -4,27 +4,37 @@ import Image from 'next/image'
 import styles from '../styles/Home.module.css'
 //import useSWR, { Fetcher, mutate } from 'swr'
 import { MosaicTile } from '@prisma/client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
+import { HexColorPicker, HexColorInput } from "react-colorful";
+import useSWR, { mutate } from 'swr'
 
 const Home: NextPage = () => {
-
-  const [tiles, setTiles] = useState<MosaicTile[]>([]);
-  const [refresh, setRefresh] = useState<boolean>(false)
- 
-  async function getAllTiles(){
-    const allTiles = await fetch('/api/getAllTiles').then(r=>r.json());
-    setTiles(allTiles);
-  }
+  const [color, setColor] = useState("#aabbcc");
+  const refetchKey = "/api/getAllTiles";
+  const fetcher: (url: RequestInfo) => Promise<any> = url => fetch(url).then(r => r.json())
+  const { data: tiles, error } = useSWR<MosaicTile[]>(refetchKey, fetcher)
 
   async function updateTile(tile: MosaicTile) {
-    const updatedTile: MosaicTile = await fetch("/api/updateTile", {  method: 'POST', body: JSON.stringify(tile) }).then(r => r.json())
-    if(tile?.color !== updatedTile.color)
+    let updatedTile: MosaicTile | undefined = undefined
+    const dataForSend = {
+      x: tile.x,
+      y: tile.y,
+      color: color
+    }
+    // restrict multiple updates based on initial color #000000
+    if(tile.color == '000000')
     {
-      setRefresh(true);
+      updatedTile = await fetch("/api/updateTile", {  method: 'POST', body: JSON.stringify(dataForSend) }).then(r => r.json())
+    }    
+    if(tile.color !== updatedTile?.color)
+    {
+      // Automatically refetch updated info as defined on: https://swr.vercel.app/docs/mutation
+      mutate(refetchKey)
     }
   }
+  
 
-  useEffect(()=>{ 
+/*   useEffect(()=>{ 
     if(refresh)
     {
       getAllTiles();
@@ -34,20 +44,27 @@ const Home: NextPage = () => {
    useEffect(()=>{ 
      if(tiles.length === 0)
     getAllTiles();
-   },[tiles])
+   },[tiles]) */
 
   //if (error) return <div>failed to load</div>
-
-  return tiles.length > 0 ? (
+  if (error) return <div>failed to load</div>
+  if (!tiles) return <div>loading...</div>
+  return (
     <div className={styles.container}>
       <Head>
         <title>Mosaic Game</title>
       </Head>
+      
 
       <main className={styles.main}>
+        
         <h1 className={styles.title}>
           Welcome to the Mosaic Game
         </h1>
+        <div>
+          <HexColorPicker color={color} onChange={setColor} />
+          <HexColorInput color={color} onChange={setColor} />
+        </div>
         <div className={styles.grid}>
         {tiles.map((tile) => 
         <div 
@@ -57,7 +74,8 @@ const Home: NextPage = () => {
         style={{backgroundColor: `#${tile.color}`}}
         onClick={()=>{
           updateTile(tile);
-          setRefresh(false)}}
+         // setRefresh(false)
+        }}
         >
         
         </div>)}
@@ -76,8 +94,8 @@ const Home: NextPage = () => {
           </span>
         </a>
       </footer>
-    </div>
-  ) : (<div>Loading...</div>)
+    </div>)
+  //) : (<div>Loading...</div>)
 }
 
 export default Home
