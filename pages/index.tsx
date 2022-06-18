@@ -50,7 +50,7 @@ const Home: NextPage = () => {
   if (error) return <div>failed to load</div>
   if (!tiles) return <div>loading...</div>
   return (
-    <div className={styles.container}>
+    <div id={"Mosaic"} className={styles.container}>
       <Head>
         <title>Mosaic Game</title>
       </Head>
@@ -62,8 +62,7 @@ const Home: NextPage = () => {
           Welcome to the Mosaic Game
         </h1>
         <div>
-          <HexColorPicker color={color} onChange={setColor} />
-          <HexColorInput color={color} onChange={setColor} />
+          <HexColorPicker id={"colorPicker"} color={color} onChange={setColor} />
         </div>
         <div className={styles.grid}>
         {tiles.map((tile) => 
